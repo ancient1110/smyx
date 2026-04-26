@@ -1,0 +1,812 @@
+{
+  "version": "0.1.0",
+  "game": {
+    "name": "Cell Commander: Emergence Tactician",
+    "rule": {
+      "birth": [
+        3
+      ],
+      "survival": [
+        2,
+        3
+      ]
+    },
+    "coordinate_system": "zero_based_xy"
+  },
+  "levels": [
+    {
+      "id": "L01",
+      "title": "点亮第一格",
+      "difficulty": "tutorial",
+      "board": {
+        "width": 6,
+        "height": 6
+      },
+      "turns": 1,
+      "placement_budget": {
+        "min": 3,
+        "max": 3
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "cell_state_at_turn",
+            "turn": 1,
+            "cell": {
+              "x": 3,
+              "y": 3
+            },
+            "state": "alive"
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "死格恰好3邻居会诞生。",
+        "hints": [
+          "把3个细胞放在目标格周围。"
+        ],
+        "fail_messages": [
+          {
+            "when": "neighbor_count_not_3",
+            "message": "目标格邻居数不是3，无法出生。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 2,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 2
+          },
+          {
+            "x": 4,
+            "y": 3
+          }
+        ],
+        "notes": "L形包围中心。"
+      }
+    },
+    {
+      "id": "L02",
+      "title": "别把它挤死",
+      "difficulty": "tutorial",
+      "board": {
+        "width": 6,
+        "height": 6
+      },
+      "turns": 2,
+      "placement_budget": {
+        "min": 2,
+        "max": 4
+      },
+      "preset_alive": [
+        {
+          "x": 3,
+          "y": 3
+        }
+      ],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "cell_state_at_turn",
+            "turn": 2,
+            "cell": {
+              "x": 3,
+              "y": 3
+            },
+            "state": "alive"
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "活细胞要2或3邻居才能活。",
+        "hints": [
+          "给中心配2~3个邻居。"
+        ],
+        "fail_messages": [
+          {
+            "when": "lonely",
+            "message": "中心细胞太孤独。"
+          },
+          {
+            "when": "crowded",
+            "message": "中心细胞过度拥挤。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 2,
+            "y": 3
+          },
+          {
+            "x": 4,
+            "y": 3
+          }
+        ],
+        "notes": "形成水平3连，中心在第2步仍存活。"
+      }
+    },
+    {
+      "id": "L03",
+      "title": "稳定块",
+      "difficulty": "easy",
+      "board": {
+        "width": 8,
+        "height": 8
+      },
+      "turns": 5,
+      "placement_budget": {
+        "min": 4,
+        "max": 4
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "board_stability_window",
+            "from_turn": 2,
+            "to_turn": 5,
+            "stable": true
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "构造连续稳定不变化的结构。",
+        "hints": [
+          "试试2x2方块。"
+        ],
+        "fail_messages": [
+          {
+            "when": "oscillates",
+            "message": "你造的是振荡，不是稳定。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 2,
+            "y": 2
+          },
+          {
+            "x": 3,
+            "y": 2
+          },
+          {
+            "x": 2,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 3
+          }
+        ],
+        "notes": "经典block still life。"
+      }
+    },
+    {
+      "id": "L04",
+      "title": "会呼吸的图案",
+      "difficulty": "easy",
+      "board": {
+        "width": 8,
+        "height": 8
+      },
+      "turns": 6,
+      "placement_budget": {
+        "min": 3,
+        "max": 3
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_oscillator_period_at_turn",
+            "turn": 6,
+            "region": {
+              "x": 2,
+              "y": 2,
+              "w": 4,
+              "h": 4
+            },
+            "oscillator_period": 2
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "找到周期为2的结构。",
+        "hints": [
+          "三连线会横竖交替。"
+        ],
+        "fail_messages": [
+          {
+            "when": "not_period_2",
+            "message": "目标区不是周期2。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 3,
+            "y": 3
+          },
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 3
+          }
+        ],
+        "notes": "blinker。"
+      }
+    },
+    {
+      "id": "L05",
+      "title": "双目标协同",
+      "difficulty": "easy",
+      "board": {
+        "width": 10,
+        "height": 10
+      },
+      "turns": 6,
+      "placement_budget": {
+        "min": 7,
+        "max": 7
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 6,
+            "region": {
+              "x": 1,
+              "y": 1,
+              "w": 3,
+              "h": 3
+            },
+            "min_alive": 4
+          }
+        },
+        {
+          "id": "g2",
+          "check": {
+            "type": "region_oscillator_period_at_turn",
+            "turn": 6,
+            "region": {
+              "x": 6,
+              "y": 5,
+              "w": 3,
+              "h": 3
+            },
+            "oscillator_period": 2
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "同时保持稳定与振荡。",
+        "hints": [
+          "把两个结构离远一点，避免干扰。"
+        ],
+        "fail_messages": [
+          {
+            "when": "interference",
+            "message": "两个子系统互相干扰了。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 2
+          },
+          {
+            "x": 2,
+            "y": 2
+          },
+          {
+            "x": 6,
+            "y": 6
+          },
+          {
+            "x": 7,
+            "y": 6
+          },
+          {
+            "x": 8,
+            "y": 6
+          }
+        ],
+        "notes": "左block + 右blinker。"
+      }
+    },
+    {
+      "id": "L06",
+      "title": "移动信号",
+      "difficulty": "normal",
+      "board": {
+        "width": 12,
+        "height": 12
+      },
+      "turns": 8,
+      "placement_budget": {
+        "min": 5,
+        "max": 5
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 8,
+            "region": {
+              "x": 5,
+              "y": 5,
+              "w": 2,
+              "h": 2
+            },
+            "min_alive": 1
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "有些结构会移动。",
+        "hints": [
+          "试试5细胞不对称图案（滑翔体）。"
+        ],
+        "fail_messages": [
+          {
+            "when": "no_arrival",
+            "message": "目标区没有接收到信号。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 3,
+            "y": 2
+          },
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 2,
+            "y": 4
+          },
+          {
+            "x": 3,
+            "y": 4
+          },
+          {
+            "x": 4,
+            "y": 4
+          }
+        ],
+        "notes": "向右下移动的glider。"
+      }
+    },
+    {
+      "id": "L07",
+      "title": "方向控制",
+      "difficulty": "normal",
+      "board": {
+        "width": 12,
+        "height": 12
+      },
+      "turns": 10,
+      "placement_budget": {
+        "min": 5,
+        "max": 5
+      },
+      "preset_alive": [],
+      "blocked_cells": [
+        {
+          "x": 5,
+          "y": 0
+        },
+        {
+          "x": 5,
+          "y": 1
+        },
+        {
+          "x": 5,
+          "y": 2
+        },
+        {
+          "x": 5,
+          "y": 3
+        },
+        {
+          "x": 5,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 8
+        },
+        {
+          "x": 5,
+          "y": 9
+        },
+        {
+          "x": 5,
+          "y": 10
+        },
+        {
+          "x": 5,
+          "y": 11
+        }
+      ],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 10,
+            "region": {
+              "x": 8,
+              "y": 6,
+              "w": 2,
+              "h": 2
+            },
+            "min_alive": 1
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "同样5细胞，方向不同路径也不同。",
+        "hints": [
+          "先看预览，再旋转图案。"
+        ],
+        "fail_messages": [
+          {
+            "when": "hit_wall",
+            "message": "信号撞墙，朝向不对。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 6,
+            "y": 4
+          },
+          {
+            "x": 7,
+            "y": 5
+          },
+          {
+            "x": 5,
+            "y": 6
+          },
+          {
+            "x": 6,
+            "y": 6
+          },
+          {
+            "x": 7,
+            "y": 6
+          }
+        ],
+        "notes": "通道口放置右下向glider。"
+      }
+    },
+    {
+      "id": "L08",
+      "title": "资源约束",
+      "difficulty": "normal",
+      "board": {
+        "width": 10,
+        "height": 10
+      },
+      "turns": 5,
+      "placement_budget": {
+        "min": 6,
+        "max": 6
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 5,
+            "region": {
+              "x": 4,
+              "y": 4,
+              "w": 3,
+              "h": 3
+            },
+            "min_alive": 4
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "恰好6格达成目标区存活数。",
+        "hints": [
+          "先造稳定核，再造一次出生触发。"
+        ],
+        "fail_messages": [
+          {
+            "when": "early_bloom",
+            "message": "前期爆发后塌缩，缺乏可持续性。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 4,
+            "y": 4
+          },
+          {
+            "x": 5,
+            "y": 4
+          },
+          {
+            "x": 4,
+            "y": 5
+          },
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 6,
+            "y": 4
+          },
+          {
+            "x": 6,
+            "y": 5
+          }
+        ],
+        "notes": "两个相邻稳定核共享边。"
+      }
+    },
+    {
+      "id": "L09",
+      "title": "抗扰动布局",
+      "difficulty": "hard",
+      "board": {
+        "width": 12,
+        "height": 12
+      },
+      "turns": 8,
+      "placement_budget": {
+        "min": 8,
+        "max": 8
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "disturbances": [
+        {
+          "turn": 3,
+          "type": "remove_first_by_scan",
+          "scope": {
+            "exclude_goal_regions": true
+          }
+        }
+      ],
+      "goals": [
+        {
+          "id": "g1",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 8,
+            "region": {
+              "x": 6,
+              "y": 5,
+              "w": 3,
+              "h": 3
+            },
+            "min_alive": 3
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "第3步会有一次干扰删除。",
+        "hints": [
+          "不要依赖单一关键节点，做双通路。"
+        ],
+        "fail_messages": [
+          {
+            "when": "single_point_failure",
+            "message": "关键单点被删除，系统崩溃。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 4
+          },
+          {
+            "x": 3,
+            "y": 5
+          },
+          {
+            "x": 4,
+            "y": 5
+          },
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 8,
+            "y": 7
+          },
+          {
+            "x": 8,
+            "y": 8
+          },
+          {
+            "x": 9,
+            "y": 8
+          }
+        ],
+        "notes": "左侧滑翔体 + 右侧冗余触发。"
+      }
+    },
+    {
+      "id": "L10",
+      "title": "毕业综合",
+      "difficulty": "hard",
+      "board": {
+        "width": 14,
+        "height": 14
+      },
+      "turns": 10,
+      "placement_budget": {
+        "min": 10,
+        "max": 10
+      },
+      "preset_alive": [],
+      "blocked_cells": [],
+      "goals": [
+        {
+          "id": "gA",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 3,
+            "region": {
+              "x": 1,
+              "y": 1,
+              "w": 3,
+              "h": 3
+            },
+            "min_alive": 2
+          }
+        },
+        {
+          "id": "gB",
+          "check": {
+            "type": "region_oscillator_period_at_turn",
+            "turn": 6,
+            "region": {
+              "x": 6,
+              "y": 6,
+              "w": 3,
+              "h": 3
+            },
+            "oscillator_period": 2
+          }
+        },
+        {
+          "id": "gC",
+          "check": {
+            "type": "region_alive_count_at_turn",
+            "turn": 10,
+            "region": {
+              "x": 10,
+              "y": 10,
+              "w": 3,
+              "h": 3
+            },
+            "min_alive": 4
+          }
+        }
+      ],
+      "tutorial": {
+        "intro": "三段式目标：启动-节奏-终态。",
+        "hints": [
+          "先放后期稳定结构，再补前中期。"
+        ],
+        "fail_messages": [
+          {
+            "when": "late_collapse",
+            "message": "早期达标但终态塌缩，先保证长期稳定。"
+          }
+        ]
+      },
+      "designer_solution": {
+        "placements": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 2
+          },
+          {
+            "x": 6,
+            "y": 7
+          },
+          {
+            "x": 7,
+            "y": 7
+          },
+          {
+            "x": 8,
+            "y": 7
+          },
+          {
+            "x": 10,
+            "y": 10
+          },
+          {
+            "x": 11,
+            "y": 10
+          },
+          {
+            "x": 10,
+            "y": 11
+          },
+          {
+            "x": 11,
+            "y": 11
+          }
+        ],
+        "notes": "左上启动器 + 中部blinker + 右下block。"
+      }
+    }
+  ]
+}
