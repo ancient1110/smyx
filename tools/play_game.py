@@ -165,7 +165,7 @@ def main():
         interactive(target)
         return
 
-    print("请使用 --list 查看关卡，或 --level L01 开始游玩。")
+    print("请使用 --list 查看关卡，或 --level L01 开始游玩。图形界面请运行：python tools/play_game_gui.py")
 
 
 if __name__ == "__main__":
