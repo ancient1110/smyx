@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smyx.local/levels/schema.json",
+  "title": "Emergence Tactician Level Pack",
+  "type": "object",
+  "required": ["version", "game", "levels"],
+  "properties": {
+    "version": { "type": "string" },
+    "game": {
+      "type": "object",
+      "required": ["name", "rule", "coordinate_system"],
+      "properties": {
+        "name": { "type": "string" },
+        "rule": {
+          "type": "object",
+          "required": ["birth", "survival"],
+          "properties": {
+            "birth": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 8 } },
+            "survival": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 8 } }
+          },
+          "additionalProperties": false
+        },
+        "coordinate_system": { "enum": ["zero_based_xy"] }
+      },
+      "additionalProperties": false
+    },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id", "title", "difficulty", "board", "turns", "placement_budget",
+          "preset_alive", "blocked_cells", "goals", "tutorial", "designer_solution"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "difficulty": { "enum": ["tutorial", "easy", "normal", "hard"] },
+          "board": {
+            "type": "object",
+            "required": ["width", "height"],
+            "properties": {
+              "width": { "type": "integer", "minimum": 3 },
+              "height": { "type": "integer", "minimum": 3 }
+            },
+            "additionalProperties": false
+          },
+          "turns": { "type": "integer", "minimum": 1 },
+          "placement_budget": {
+            "type": "object",
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "integer", "minimum": 0 },
+              "max": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+          "preset_alive": { "$ref": "#/$defs/cell_list" },
+          "blocked_cells": { "$ref": "#/$defs/cell_list" },
+          "disturbances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["turn", "type"],
+              "properties": {
+                "turn": { "type": "integer", "minimum": 1 },
+                "type": { "enum": ["remove_first_by_scan"] },
+                "scope": {
+                  "type": "object",
+                  "required": ["exclude_goal_regions"],
+                  "properties": {
+                    "exclude_goal_regions": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "default": []
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "check"],
+              "properties": {
+                "id": { "type": "string" },
+                "check": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "required": ["type", "turn", "cell", "state"],
+                      "properties": {
+                        "type": { "const": "cell_state_at_turn" },
+                        "turn": { "type": "integer", "minimum": 1 },
+                        "cell": { "$ref": "#/$defs/cell" },
+                        "state": { "enum": ["alive", "dead"] }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "required": ["type", "from_turn", "to_turn", "stable"],
+                      "properties": {
+                        "type": { "const": "board_stability_window" },
+                        "from_turn": { "type": "integer", "minimum": 1 },
+                        "to_turn": { "type": "integer", "minimum": 1 },
+                        "stable": { "type": "boolean" }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "required": ["type", "turn", "region", "min_alive"],
+                      "properties": {
+                        "type": { "const": "region_alive_count_at_turn" },
+                        "turn": { "type": "integer", "minimum": 1 },
+                        "region": { "$ref": "#/$defs/rect" },
+                        "min_alive": { "type": "integer", "minimum": 0 }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "required": ["type", "turn", "region", "oscillator_period"],
+                      "properties": {
+                        "type": { "const": "region_oscillator_period_at_turn" },
+                        "turn": { "type": "integer", "minimum": 2 },
+                        "region": { "$ref": "#/$defs/rect" },
+                        "oscillator_period": { "const": 2 }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "required": ["type", "turn", "regions"],
+                      "properties": {
+                        "type": { "const": "all_regions_nonempty_at_turn" },
+                        "turn": { "type": "integer", "minimum": 1 },
+                        "regions": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": { "$ref": "#/$defs/rect" }
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "tutorial": {
+            "type": "object",
+            "required": ["intro", "hints", "fail_messages"],
+            "properties": {
+              "intro": { "type": "string" },
+              "hints": { "type": "array", "items": { "type": "string" } },
+              "fail_messages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["when", "message"],
+                  "properties": {
+                    "when": { "type": "string" },
+                    "message": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "designer_solution": {
+            "type": "object",
+            "required": ["placements", "notes"],
+            "properties": {
+              "placements": { "$ref": "#/$defs/cell_list" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "cell_list": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cell" }
+    },
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "w": { "type": "integer", "minimum": 1 },
+        "h": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
