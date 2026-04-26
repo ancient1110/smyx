@@ -144,7 +144,9 @@ def simulate_level(level):
 
 
 def main():
-    data = json.loads(LEVELS_FILE.read_text())
+    # Always read as UTF-8 so Windows locales like GBK/CP936 don't fail on
+    # Chinese tutorial strings in the level JSON.
+    data = json.loads(LEVELS_FILE.read_text(encoding="utf-8"))
     print(f"Playtesting {len(data['levels'])} levels from {LEVELS_FILE}")
     all_ok = True
     for lv in data["levels"]:
