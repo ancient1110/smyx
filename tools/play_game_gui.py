@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Graphical level runner for Emergence Tactician (Tkinter)."""
+"""Modern Tkinter GUI runner for Emergence Tactician levels."""
 
 import json
 import tkinter as tk
@@ -11,187 +11,272 @@ from playtest_levels import eval_goal, rect_cells, step
 ROOT = Path(__file__).resolve().parents[1]
 LEVELS_FILE = ROOT / "levels" / "levels_01_10.json"
 
-CELL_SIZE = 28
-PADDING = 18
+CELL_SIZE = 30
+BOARD_PAD = 20
 
-BG = "#10131a"
-PANEL = "#171d2a"
-GRID = "#2a3348"
-ALIVE = "#59d185"
-PRESET = "#49a3ff"
-BLOCK = "#6b7280"
-EMPTY = "#1e2535"
-TEXT = "#e6edf7"
-MUTED = "#a6b0c3"
-ACCENT = "#8b5cf6"
+PALETTE = {
+    "bg": "#0B1020",
+    "panel": "#121A2D",
+    "panel_2": "#18233B",
+    "text": "#EAF0FF",
+    "muted": "#9FB0D0",
+    "accent": "#6EA8FE",
+    "success": "#38D996",
+    "warning": "#FFB86B",
+    "cell_empty": "#1A2540",
+    "cell_grid": "#273455",
+    "cell_alive": "#35C883",
+    "cell_preset": "#4B95FF",
+    "cell_block": "#64748B",
+}
 
 
-class GameApp:
+class ModernGameApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Cell Commander · Emergence Tactician")
-        self.root.configure(bg=BG)
+        self.root.configure(bg=PALETTE["bg"])
+        self.root.geometry("1280x820")
+        self.root.minsize(1080, 720)
 
-        self.data = json.loads(LEVELS_FILE.read_text(encoding="utf-8"))
-        self.levels = self.data["levels"]
+        data = json.loads(LEVELS_FILE.read_text(encoding="utf-8"))
+        self.levels = data["levels"]
         self.level_map = {lv["id"]: lv for lv in self.levels}
 
-        self.level_var = tk.StringVar(value=self.levels[0]["id"])
-        self.status_var = tk.StringVar(value="欢迎！先选关并点击棋盘放置细胞。")
+        self.current_level = self.levels[0]
+        self.user_placements = set()
+
+        self.level_var = tk.StringVar()
+        self.status_var = tk.StringVar(value="欢迎，先选择关卡并点击棋盘放置细胞。")
         self.budget_var = tk.StringVar(value="")
 
-        self.user_placements = set()
-        self.current_level = self.levels[0]
-
-        self._build_ui()
+        self._configure_style()
+        self._build_layout()
         self._load_level(self.current_level["id"])
 
-    def _build_ui(self):
-        top = tk.Frame(self.root, bg=BG)
-        top.pack(fill="x", padx=14, pady=10)
+    def _configure_style(self):
+        style = ttk.Style(self.root)
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
 
-        tk.Label(top, text="关卡", fg=TEXT, bg=BG, font=("Segoe UI", 11, "bold")).pack(side="left")
+        style.configure("Top.TFrame", background=PALETTE["panel"])
+        style.configure("Body.TFrame", background=PALETTE["bg"])
+        style.configure("Card.TFrame", background=PALETTE["panel"])
 
-        picker = ttk.Combobox(
-            top,
-            textvariable=self.level_var,
-            values=[f"{lv['id']} · {lv['title']}" for lv in self.levels],
-            state="readonly",
-            width=26,
+        style.configure("Title.TLabel", background=PALETTE["panel"], foreground=PALETTE["text"], font=("Segoe UI", 16, "bold"))
+        style.configure("Sub.TLabel", background=PALETTE["panel"], foreground=PALETTE["muted"], font=("Segoe UI", 10))
+        style.configure("Head.TLabel", background=PALETTE["panel"], foreground=PALETTE["text"], font=("Segoe UI", 11, "bold"))
+
+        style.configure(
+            "Game.TButton",
+            font=("Segoe UI", 10, "bold"),
+            foreground=PALETTE["text"],
+            background=PALETTE["panel_2"],
+            padding=(10, 8),
+            borderwidth=0,
         )
-        picker.pack(side="left", padx=10)
-        picker.bind("<<ComboboxSelected>>", self.on_level_change)
+        style.map("Game.TButton", background=[("active", "#223152")])
 
-        ttk.Button(top, text="加载设计解", command=self.load_solution).pack(side="left", padx=4)
-        ttk.Button(top, text="重置", command=self.reset_placements).pack(side="left", padx=4)
-        ttk.Button(top, text="运行", command=self.run_level).pack(side="left", padx=4)
+    def _build_layout(self):
+        top = ttk.Frame(self.root, style="Top.TFrame", padding=(16, 14))
+        top.pack(fill="x")
 
-        main = tk.Frame(self.root, bg=BG)
-        main.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+        left_top = ttk.Frame(top, style="Top.TFrame")
+        left_top.pack(side="left", fill="x", expand=True)
 
-        self.canvas = tk.Canvas(main, bg=PANEL, highlightthickness=0)
-        self.canvas.pack(side="left", fill="both", expand=False)
+        ttk.Label(left_top, text="Emergence Tactician", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(left_top, text="点击放置细胞，运行模拟，完成目标。", style="Sub.TLabel").pack(anchor="w", pady=(2, 0))
+
+        right_top = ttk.Frame(top, style="Top.TFrame")
+        right_top.pack(side="right")
+
+        self.level_combo = ttk.Combobox(
+            right_top,
+            textvariable=self.level_var,
+            state="readonly",
+            width=28,
+            values=[f"{lv['id']} · {lv['title']}" for lv in self.levels],
+        )
+        self.level_combo.pack(side="left", padx=(0, 8))
+        self.level_combo.bind("<<ComboboxSelected>>", self.on_level_change)
+
+        ttk.Button(right_top, text="加载设计解", style="Game.TButton", command=self.load_solution).pack(side="left", padx=4)
+        ttk.Button(right_top, text="重置", style="Game.TButton", command=self.reset_placements).pack(side="left", padx=4)
+        ttk.Button(right_top, text="运行模拟", style="Game.TButton", command=self.run_level).pack(side="left", padx=4)
+
+        body = ttk.Frame(self.root, style="Body.TFrame", padding=(16, 14, 16, 16))
+        body.pack(fill="both", expand=True)
+        body.grid_columnconfigure(0, weight=3)
+        body.grid_columnconfigure(1, weight=2)
+        body.grid_rowconfigure(0, weight=1)
+
+        # Board card
+        board_card = tk.Frame(body, bg=PALETTE["panel"], bd=0, highlightthickness=0)
+        board_card.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+
+        self.canvas = tk.Canvas(board_card, bg=PALETTE["panel"], highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True, padx=8, pady=8)
         self.canvas.bind("<Button-1>", self.on_canvas_click)
 
-        side = tk.Frame(main, bg=PANEL)
-        side.pack(side="left", fill="both", expand=True, padx=(12, 0))
+        # Info card
+        info = tk.Frame(body, bg=PALETTE["panel"], bd=0, highlightthickness=0)
+        info.grid(row=0, column=1, sticky="nsew")
 
-        tk.Label(side, text="关卡说明", fg=TEXT, bg=PANEL, font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(10, 4))
+        self._section(info, "关卡说明", "intro")
+        self._section(info, "目标", "goals")
+        self._section(info, "提示", "hints")
 
-        self.intro_text = tk.Text(side, height=4, wrap="word", bg=PANEL, fg=MUTED, bd=0)
-        self.intro_text.pack(fill="x", padx=10)
-        self.intro_text.configure(state="disabled")
+        footer = tk.Frame(info, bg=PALETTE["panel_2"])
+        footer.pack(fill="x", padx=12, pady=(8, 12))
 
-        tk.Label(side, text="目标", fg=TEXT, bg=PANEL, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=10, pady=(8, 2))
-        self.goal_text = tk.Text(side, height=8, wrap="word", bg=PANEL, fg=MUTED, bd=0)
-        self.goal_text.pack(fill="x", padx=10)
-        self.goal_text.configure(state="disabled")
+        self.budget_label = tk.Label(
+            footer,
+            textvariable=self.budget_var,
+            bg=PALETTE["panel_2"],
+            fg=PALETTE["text"],
+            anchor="w",
+            justify="left",
+            font=("Segoe UI", 11, "bold"),
+            padx=10,
+            pady=8,
+        )
+        self.budget_label.pack(fill="x")
 
-        tk.Label(side, text="提示", fg=TEXT, bg=PANEL, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=10, pady=(8, 2))
-        self.hint_text = tk.Text(side, height=6, wrap="word", bg=PANEL, fg=MUTED, bd=0)
-        self.hint_text.pack(fill="x", padx=10)
-        self.hint_text.configure(state="disabled")
+        self.status_label = tk.Label(
+            footer,
+            textvariable=self.status_var,
+            bg=PALETTE["panel_2"],
+            fg=PALETTE["accent"],
+            anchor="w",
+            justify="left",
+            font=("Segoe UI", 10),
+            wraplength=420,
+            padx=10,
+            pady=8,
+        )
+        self.status_label.pack(fill="x")
 
-        tk.Label(side, textvariable=self.budget_var, fg=TEXT, bg=PANEL, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=10, pady=10)
+    def _section(self, parent, title, key):
+        frame = tk.Frame(parent, bg=PALETTE["panel"])
+        frame.pack(fill="x", padx=12, pady=(10, 0))
 
-        tk.Label(side, textvariable=self.status_var, fg=ACCENT, bg=PANEL, wraplength=420, justify="left").pack(anchor="w", padx=10, pady=(4, 10))
+        tk.Label(frame, text=title, bg=PALETTE["panel"], fg=PALETTE["text"], font=("Segoe UI", 11, "bold"), anchor="w").pack(fill="x")
+
+        label = tk.Label(
+            frame,
+            text="",
+            bg=PALETTE["panel"],
+            fg=PALETTE["muted"],
+            justify="left",
+            anchor="nw",
+            font=("Segoe UI", 10),
+            wraplength=430,
+            padx=2,
+            pady=4,
+        )
+        label.pack(fill="x")
+        setattr(self, f"{key}_label", label)
 
     def on_level_change(self, _evt=None):
-        token = self.level_var.get().split(" · ")[0]
-        self._load_level(token)
+        level_id = self.level_var.get().split(" · ")[0]
+        self._load_level(level_id)
 
     def _load_level(self, level_id):
-        lv = self.level_map[level_id]
-        self.current_level = lv
+        self.current_level = self.level_map[level_id]
         self.user_placements = set()
 
-        w = lv["board"]["width"]
-        h = lv["board"]["height"]
-        self.canvas.config(width=w * CELL_SIZE + PADDING * 2, height=h * CELL_SIZE + PADDING * 2)
+        lv = self.current_level
+        self.level_var.set(f"{lv['id']} · {lv['title']}")
 
-        self._set_text(self.intro_text, lv["tutorial"]["intro"])
+        self.intro_label.config(text=lv["tutorial"]["intro"])
 
-        goals = []
+        goal_lines = []
         for g in lv["goals"]:
             ch = g["check"]
-            goals.append(f"- {g['id']}: {ch['type']}")
-        self._set_text(self.goal_text, "\n".join(goals))
-        self._set_text(self.hint_text, "\n".join(f"- {h}" for h in lv["tutorial"]["hints"]))
+            goal_lines.append(f"• {g['id']}：{ch['type']}")
+        self.goals_label.config(text="\n".join(goal_lines))
+
+        hint_lines = [f"• {h}" for h in lv["tutorial"]["hints"]]
+        self.hints_label.config(text="\n".join(hint_lines))
 
         b = lv["placement_budget"]
-        self.budget_var.set(f"放置预算：{b['min']} ~ {b['max']}（当前 {len(self.user_placements)}）")
-        self.status_var.set("已载入关卡，点击左侧棋盘放置细胞。")
+        self.budget_var.set(f"放置预算：{b['min']} ~ {b['max']}（当前 0）")
+        self.status_var.set("已载入关卡，点击棋盘放置细胞。")
+
         self.draw_board()
 
-    @staticmethod
-    def _set_text(widget, value):
-        widget.configure(state="normal")
-        widget.delete("1.0", tk.END)
-        widget.insert("1.0", value)
-        widget.configure(state="disabled")
+    def _board_sets(self):
+        lv = self.current_level
+        blocked = {(c["x"], c["y"]) for c in lv.get("blocked_cells", [])}
+        preset = {(c["x"], c["y"]) for c in lv.get("preset_alive", [])}
+        return blocked, preset
 
-    def draw_board(self, alive_override=None):
+    def draw_board(self, show_alive=None):
         lv = self.current_level
         w = lv["board"]["width"]
         h = lv["board"]["height"]
+        blocked, preset = self._board_sets()
+        user = set(self.user_placements) if show_alive is None else set(show_alive)
 
-        blocked = {(c["x"], c["y"]) for c in lv.get("blocked_cells", [])}
-        preset = {(c["x"], c["y"]) for c in lv.get("preset_alive", [])}
-        user = set(self.user_placements) if alive_override is None else set(alive_override)
-
+        width_px = BOARD_PAD * 2 + w * CELL_SIZE
+        height_px = BOARD_PAD * 2 + h * CELL_SIZE
+        self.canvas.config(width=width_px, height=height_px)
         self.canvas.delete("all")
-        self.canvas.create_rectangle(0, 0, w * CELL_SIZE + PADDING * 2, h * CELL_SIZE + PADDING * 2, fill=PANEL, outline=PANEL)
+
+        self.canvas.create_rectangle(0, 0, width_px, height_px, fill=PALETTE["panel"], outline=PALETTE["panel"])
 
         for y in range(h):
             for x in range(w):
-                x0 = PADDING + x * CELL_SIZE
-                y0 = PADDING + y * CELL_SIZE
+                x0 = BOARD_PAD + x * CELL_SIZE
+                y0 = BOARD_PAD + y * CELL_SIZE
                 x1 = x0 + CELL_SIZE - 1
                 y1 = y0 + CELL_SIZE - 1
 
-                c = (x, y)
-                if c in blocked:
-                    fill = BLOCK
-                elif c in preset:
-                    fill = PRESET
-                elif c in user:
-                    fill = ALIVE
+                cell = (x, y)
+                if cell in blocked:
+                    fill = PALETTE["cell_block"]
+                elif cell in preset:
+                    fill = PALETTE["cell_preset"]
+                elif cell in user:
+                    fill = PALETTE["cell_alive"]
                 else:
-                    fill = EMPTY
+                    fill = PALETTE["cell_empty"]
 
-                self.canvas.create_rectangle(x0, y0, x1, y1, fill=fill, outline=GRID)
+                self.canvas.create_rectangle(x0, y0, x1, y1, fill=fill, outline=PALETTE["cell_grid"])
 
     def on_canvas_click(self, evt):
         lv = self.current_level
         w = lv["board"]["width"]
         h = lv["board"]["height"]
-        x = (evt.x - PADDING) // CELL_SIZE
-        y = (evt.y - PADDING) // CELL_SIZE
+        x = (evt.x - BOARD_PAD) // CELL_SIZE
+        y = (evt.y - BOARD_PAD) // CELL_SIZE
+
         if not (0 <= x < w and 0 <= y < h):
             return
 
-        blocked = {(c["x"], c["y"]) for c in lv.get("blocked_cells", [])}
-        preset = {(c["x"], c["y"]) for c in lv.get("preset_alive", [])}
-        cell = (x, y)
-
-        if cell in blocked or cell in preset:
+        blocked, preset = self._board_sets()
+        c = (x, y)
+        if c in blocked or c in preset:
             self.status_var.set("该格不可编辑（障碍或预置细胞）。")
             return
 
-        if cell in self.user_placements:
-            self.user_placements.remove(cell)
+        if c in self.user_placements:
+            self.user_placements.remove(c)
         else:
-            self.user_placements.add(cell)
+            self.user_placements.add(c)
 
         b = lv["placement_budget"]
         self.budget_var.set(f"放置预算：{b['min']} ~ {b['max']}（当前 {len(self.user_placements)}）")
+        self.status_var.set(f"已更新放置：({x}, {y})")
         self.draw_board()
 
     def reset_placements(self):
-        self.user_placements = set()
+        self.user_placements.clear()
         b = self.current_level["placement_budget"]
         self.budget_var.set(f"放置预算：{b['min']} ~ {b['max']}（当前 0）")
-        self.status_var.set("已清空玩家放置。")
+        self.status_var.set("已重置玩家放置。")
         self.draw_board()
 
     def load_solution(self):
@@ -211,13 +296,13 @@ class GameApp:
 
         states, failures = self._simulate(lv, self.user_placements)
         final_alive = states[lv["turns"]]
-        self.draw_board(alive_override=final_alive)
+        self.draw_board(show_alive=final_alive)
 
         if failures:
-            self.status_var.set(f"未达成目标：{', '.join(failures)}")
-            messagebox.showinfo("结果", f"本次未过关，失败目标：{', '.join(failures)}")
+            self.status_var.set(f"未过关：失败目标 {', '.join(failures)}")
+            messagebox.showinfo("结果", f"未过关。失败目标：{', '.join(failures)}")
         else:
-            self.status_var.set("🎉 恭喜，全部目标达成！")
+            self.status_var.set("🎉 过关！全部目标达成。")
             messagebox.showinfo("结果", "过关！全部目标达成。")
 
     def _simulate(self, level, placements):
@@ -242,10 +327,10 @@ class GameApp:
             if d.get("scope", {}).get("exclude_goal_regions"):
                 for r in goal_regions:
                     excluded.update(rect_cells(r))
-            for y in range(h):
-                for x in range(w):
-                    if (x, y) in alive_now and (x, y) not in excluded:
-                        alive_now.remove((x, y))
+            for yy in range(h):
+                for xx in range(w):
+                    if (xx, yy) in alive_now and (xx, yy) not in excluded:
+                        alive_now.remove((xx, yy))
                         return alive_now
             return alive_now
 
@@ -264,14 +349,7 @@ class GameApp:
 
 def main():
     root = tk.Tk()
-    style = ttk.Style(root)
-    try:
-        style.theme_use("clam")
-    except tk.TclError:
-        pass
-
-    style.configure("TButton", padding=6)
-    app = GameApp(root)
+    ModernGameApp(root)
     root.mainloop()
 
 
