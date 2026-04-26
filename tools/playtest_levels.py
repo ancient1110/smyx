@@ -143,6 +143,13 @@ def simulate_level(level):
     return True, "ok"
 
 
+def simulate_level_with_placements(level, placements):
+    """Simulate a level with caller-provided placements."""
+    level_copy = dict(level)
+    level_copy["designer_solution"] = {"placements": placements, "notes": "runtime placements"}
+    return simulate_level(level_copy)
+
+
 def main():
     # Always read as UTF-8 so Windows locales like GBK/CP936 don't fail on
     # Chinese tutorial strings in the level JSON.
